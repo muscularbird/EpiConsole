@@ -256,7 +256,7 @@ export default function GameTest() {
                 Multiplayer Game
             </div>
             <div>Players: {Object.keys(gameState.players).length}</div>
-            <div>Enemies: {gameState.enemies.length}</div>
+            {/* <div>Enemies: {gameState.enemies.length}</div> */}
             <div style={{marginTop: '10px'}}>
                 <strong>Scoreboard:</strong>
                 {Object.values(gameState.players)
@@ -286,7 +286,7 @@ export default function GameTest() {
     return (
         <div style={{ position: 'relative' }}>
             <UIOverlay />
-            <Application width={800} height={600} background={0x1e1e1e}>
+            <Application width={1000} height={700} background={0x1e1e1e}>
                 <GameLoop />
                 <PlayersGraphics />
                 <EnemiesGraphics />

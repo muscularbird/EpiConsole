@@ -11,9 +11,16 @@ export default defineConfig(({ mode }) => {
       react(),
       tailwindcss(),
     ],
+    build: {
+      outDir: "../dist_client", // build outside the client folder
+    },
     server: {
     host: "0.0.0.0",
-    port: process.env.HOST_PORT ? parseInt(process.env.HOST_PORT) : 3000,
+    port: process.env.PORT ? parseInt(process.env.PORT) : 5173,
+    watch: {
+      usePolling: true,
+      interval: 100,
+    },
   },
   }))
 })
