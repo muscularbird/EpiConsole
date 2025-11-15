@@ -8,8 +8,16 @@ WORKDIR /client
 COPY client/package*.json ./
 RUN npm install
 
+ARG VITE_IP
 COPY client .
 RUN npm run build   # Produces /dist folder
+
+FROM nginx:1.25-alpine
+
+COPY --from=build-stage /app/dist/ /usr/share/nginx/html
+
+# Optional: custom nginx config
+# COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # -------------------------------
 # 2. Build Node backend
