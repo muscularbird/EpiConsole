@@ -1,12 +1,11 @@
 import Joystick, { Direction } from 'rc-joystick';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'react-router';
-import { socket } from '../Socket'
 import { useNavigate } from 'react-router';
 import { Button } from '../components/ui/button';
 import { useGameNetwork } from '../utils/network';
 
-function Arrows({gameID, sendCommand}: {gameID?: number, sendCommand: (direction: string) => void}) {
+function Arrows({ sendCommand}: { sendCommand: (direction: string) => void}) {
     const send = (direction: string) => {
         console.log(direction);
         sendCommand(direction);
@@ -29,7 +28,7 @@ function Arrows({gameID, sendCommand}: {gameID?: number, sendCommand: (direction
     )
 }
 
-function MyJoystick({gameID, toggleFullSceen, sendCommand}: {gameID: number, toggleFullSceen: Function, sendCommand: (direction: string) => void}) {
+function MyJoystick({toggleFullSceen, sendCommand}: {toggleFullSceen: Function, sendCommand: (direction: string) => void}) {
     const send = (direction: Direction | String) => {
         if (direction == "Center") return;
         sendCommand(direction.toString());
@@ -101,8 +100,8 @@ export default function Controller() {
                             <button onClick={() => navi('/')} className="absolute top-5 left-5 z-10 btn btn-primary bg-amber-300 rounded-2xl p-1 hover:shadow-xl">go to website</button>
                             <button onClick={() => setMode(mode == 'arrows' ? 'joystick' : 'arrows')} className="absolute top-5 right-5 z-10 btn btn-primary bg-amber-300 rounded-2xl p-1 hover:shadow-xl">{mode == 'arrows' ? 'Use joystick' : 'Use arrows'}</button>
                         </div>
-                        {mode == 'arrows' && <Arrows gameID={Number(gameID)} sendCommand={sendCommand}/>}
-                        {mode == 'joystick' && <MyJoystick gameID={Number(gameID)} toggleFullSceen={toggleFullSceen} sendCommand={sendCommand}/>}
+                        {mode == 'arrows' && <Arrows sendCommand={sendCommand}/>}
+                        {mode == 'joystick' && <MyJoystick toggleFullSceen={toggleFullSceen} sendCommand={sendCommand}/>}
                     </div>
                 ))
             }

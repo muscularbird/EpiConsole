@@ -4,8 +4,7 @@ import { useGameNetwork } from '../../utils/network';
 import {
     Container,
     Graphics,
-    Sprite,
-    Assets
+    Sprite
 } from 'pixi.js';
 
 extend({

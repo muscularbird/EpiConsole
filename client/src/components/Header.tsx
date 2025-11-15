@@ -1,13 +1,9 @@
 import { Link } from "react-router";
 import {
   NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuIndicator,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
-  NavigationMenuViewport,
   navigationMenuTriggerStyle,
 } from "../components/ui/navigation-menu"
 import { useNavigate } from "react-router";
