@@ -1,5 +1,7 @@
 services:
   server:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     build:
       context: ./server
     container_name: server_airconsole
@@ -13,18 +15,23 @@ services:
       - back-tier
 
   client_web:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     build:
       context: ./client
       dockerfile: Dockerfile
     container_name: client_web_airconsole
     ports:
-      - "5173:5173"
+      - "${HOST_PORT}:${HOST_PORT}"
     restart: unless-stopped
     # depends_on:
       # - server
     volumes:
       - ./client:/src
       - common:/shared
+    environment:
+      - VITE_IP=${HOST_IP}
+      - VITE_PORT=${HOST_PORT}
 
 networks:
   back-tier:

@@ -7,6 +7,6 @@ RUN npm install
 
 COPY . .
 
-EXPOSE 5173
+EXPOSE 3000
 
-ENTRYPOINT ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+ENTRYPOINT ["npm", "run", "dev"]
