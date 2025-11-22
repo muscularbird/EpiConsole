@@ -66,7 +66,7 @@ export default function Controller() {
 
 
     return (
-        <div className="flex h-screen justify-center items-center align-middle">
+        <div className="fixed inset-0 flex justify-center items-center align-middle overflow-hidden">
             {gameID !== null && <h2 className="text-2xl top-14 left-5 absolute">Game ID: {gameID}</h2>}
             {gameID == null ? <div>
                 <h2 className="text-3xl m-auto">Enter the Game ID</h2>

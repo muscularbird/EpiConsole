@@ -14,7 +14,7 @@ or
 
     ip a #next to inet
 
-create a .env with HOST_IP=your_ip
+create a .env with HOST_IP=your_ip and HOST_PORT with the port you want
 
 then run:
 

@@ -25,17 +25,20 @@ interface Player {
 
 interface GameState {
     players: { [socketID: string]: Player };
-    enemies: Array<{ x: number, y: number, width: number, height: number }>;
+    balls: Array<{ x: number, y: number, width: number, height: number, resetting?: boolean, dx: number, dy: number }>;
     gameOver: boolean;
     gameStarted: boolean;
 }
 
 const PLAYER_COLORS = ['blue', 'green', 'orange', 'purple', 'yellow', 'cyan'];
+const HEIGHT = 700, WIDTH = 1000;
 
 export default function GameTest() {
+    const ballSpeed = 4;
+    
     const [gameState, setGameState] = useState<GameState>({
         players: {},
-        enemies: [],
+        balls: [{ x: WIDTH / 2, y: HEIGHT / 2, width: 10, height: 10, resetting: false, dx: ballSpeed, dy: -ballSpeed }],
         gameOver: false,
         gameStarted: false
     });
@@ -83,13 +86,25 @@ export default function GameTest() {
             if (!newState.players[socketID]) {
                 const playerCount = Object.keys(newState.players).length;
                 const color = PLAYER_COLORS[playerCount % PLAYER_COLORS.length];
+                const PlayersPosition = [
+                    // left (centered)
+                    { x: 10, y: HEIGHT / 2 - 40, width: 20, height: 80 },
+                    // right (centered)
+                    { x: WIDTH - 30, y: HEIGHT / 2 - 40, width: 20, height: 80 },
+                    // top (centered)
+                    { x: WIDTH / 2 - 40, y: 10, width: 80, height: 20 },
+                    // bottom (centered)
+                    { x: WIDTH / 2 - 40, y: HEIGHT - 30, width: 80, height: 20 },
+                ];
+                
+                const pos = PlayersPosition[playerCount % PlayersPosition.length];
                 
                 newState.players[socketID] = {
                     id: socketID,
-                    x: 50 + (playerCount * 100), // Spread players horizontally
-                    y: 100,
-                    width: 20,
-                    height: 40,
+                    x: pos.x,
+                    y: pos.y,
+                    width: pos.width,
+                    height: pos.height,
                     color: color,
                     score: 0
                 };
@@ -102,7 +117,7 @@ export default function GameTest() {
             
             if (newState.players[socketID]) {
                 const player = { ...newState.players[socketID] };
-                const moveSpeed = 5;
+                const moveSpeed = 3;
                 
                 switch (command) {
                     case 'Top':
@@ -110,12 +125,6 @@ export default function GameTest() {
                         break;
                     case 'Bottom':
                         player.y = Math.min(560, player.y + moveSpeed);
-                        break;
-                    case 'Left':
-                        player.x = Math.max(0, player.x - moveSpeed);
-                        break;
-                    case 'Right':
-                        player.x = Math.min(780, player.x + moveSpeed);
                         break;
                 }
                 
@@ -126,57 +135,70 @@ export default function GameTest() {
         });
     };
 
-    const updateGame = useCallback((delta: number | import('pixi.js').Ticker) => {
-        const numericDelta = typeof delta === 'number'
-            ? delta
-            : ((delta as any).delta ?? (delta as any).deltaTime ?? 1);
-
+    const updateGame = useCallback(() => {
         setGameState(prev => {
             if (prev.gameOver || !prev.gameStarted) return prev;
             
             const newState = { ...prev };
-            
-            // Spawn enemies
-            if (Math.random() < 0.02) {
-                newState.enemies = [...prev.enemies, {
-                    x: Math.random() * 760,
-                    y: -20,
-                    width: 20,
-                    height: 20
-                }];
-            }
-            
-            // Move enemies
-            newState.enemies = prev.enemies
-                .map(enemy => ({ ...enemy, y: enemy.y + 2 * numericDelta }))
-                .filter(enemy => enemy.y < 620);
-            
-            // Check collisions for each player
-            const playersArray = Object.values(newState.players);
-            // let anyPlayerHit = false;
-            
-            playersArray.forEach(player => {
-                const playerHit = newState.enemies.some(enemy => 
-                    checkCollision(player, enemy)
-                );
-                
-                if (playerHit) {
-                    // Respawn player at bottom with score penalty
-                    newState.players[player.id] = {
-                        ...player,
-                        y: 500,
-                        score: Math.max(0, player.score - 100)
-                    };
+
+            // move balls
+            const newBalls = prev.balls.map(ball => {
+                const newBall = { ...ball };
+                newBall.x = newBall.x + newBall.dx;
+                newBall.y = newBall.y + newBall.dy;
+
+                // prevent ball from going through top/bottom walls by changing its velocity
+                if (newBall.y < 0) {
+                    newBall.y = 0;
+                    newBall.dy *= -1;
+                } else if (newBall.y + newBall.height > HEIGHT) {
+                    newBall.y = HEIGHT - newBall.height;
+                    newBall.dy *= -1;
                 }
+
+                // prevent ball from going through left/right walls
+                if (newBall.x < 0) {
+                    newBall.x = 0;
+                    newBall.dx *= -1;
+                } else if (newBall.x + newBall.width > WIDTH) {
+                    newBall.x = WIDTH - newBall.width;
+                    newBall.dx *= -1;
+                }
+
+                return newBall;
             });
-            
+
+            // check collisions between players and balls
             Object.keys(newState.players).forEach(socketID => {
-                newState.players[socketID].score += Math.floor(numericDelta);
+                const player = newState.players[socketID];
+                newBalls.forEach((ball, index) => {
+                    if (checkCollision(player, ball)) {
+                        // bounce ball horizontally
+                        const bounced = { ...ball };
+                        bounced.dx *= -1;
+
+                        // nudge ball outside player to avoid repeated collisions
+                        if (bounced.dx > 0) {
+                            bounced.x = player.x + player.width;
+                        } else {
+                            bounced.x = player.x - bounced.width;
+                        }
+
+                        // optionally increase speed slightly (cap it)
+                        const speedIncrease = 0.5;
+                        const maxSpeed = 12;
+                        const newSpeed = Math.min(Math.abs(bounced.dx) + speedIncrease, maxSpeed);
+                        bounced.dx = Math.sign(bounced.dx) * newSpeed;
+
+                        newBalls[index] = bounced;
+
+                        // award a point to the player that hit the ball
+                        newState.players[socketID] = { ...player, score: (player.score || 0) + 1 };
+                    }
+                });
             });
-            
-            // if (Object.keys(newState.players).length === 0) {
-            //     newState.gameOver = true;
-            // }
+
+            newState.balls = newBalls;
             
             return newState;
         });
@@ -216,28 +238,28 @@ export default function GameTest() {
         );
     }, [gameState.players]);
 
-    const EnemiesGraphics = useCallback(() => {
+    const BallsGraphics = useCallback(() => {
         return (
             <>
-                {gameState.enemies.map((enemy, index) => {
+                {gameState.balls.map((ball, index) => {
                     const draw = useCallback((g: any) => {
                         g.clear();
-                        g.rect(0, 0, enemy.width, enemy.height);
+                        g.rect(0, 0, ball.width, ball.height);
                         g.fill('red');
-                    }, [enemy]);
+                    }, [ball]);
 
                     return (
                         <pixiGraphics 
                             key={index}
                             draw={draw} 
-                            x={enemy.x} 
-                            y={enemy.y} 
+                            x={ball.x} 
+                            y={ball.y} 
                         />
                     );
                 })}
             </>
         );
-    }, [gameState.enemies]);
+    }, [gameState.balls]);
 
     const UIOverlay = () => (
         <div style={{
@@ -256,7 +278,7 @@ export default function GameTest() {
                 Multiplayer Game
             </div>
             <div>Players: {Object.keys(gameState.players).length}</div>
-            {/* <div>Enemies: {gameState.enemies.length}</div> */}
+            {/* <div>balls: {gameState.balls.length}</div> */}
             <div style={{marginTop: '10px'}}>
                 <strong>Scoreboard:</strong>
                 {Object.values(gameState.players)
@@ -286,10 +308,10 @@ export default function GameTest() {
     return (
         <div style={{ position: 'relative' }}>
             <UIOverlay />
-            <Application width={1000} height={700} background={0x1e1e1e}>
+            <Application width={WIDTH} height={HEIGHT} background={0x1e1e1e}>
                 <GameLoop />
                 <PlayersGraphics />
-                <EnemiesGraphics />
+                <BallsGraphics />
             </Application>
         </div>
     );
