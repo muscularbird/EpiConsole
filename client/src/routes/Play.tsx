@@ -47,7 +47,7 @@ export default function Play() {
 
   const runGame = (selectedGame: string) => {
     // Logic to start the selected game
-    navigate('/gameTest');
+    navigate(`/${selectedGame}?gameID=${gameID}`);
     console.log(`Starting game: ${selectedGame} with Game ID: ${gameID}`);
     // You can add more logic here to actually launch the game
   }

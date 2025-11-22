@@ -1,9 +1,10 @@
 import Joystick, { Direction } from 'rc-joystick';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { useNavigate } from 'react-router';
 import { Button } from '../components/ui/button';
 import { useGameNetwork } from '../utils/network';
+import { useGyroscope } from '../utils/useGyroscope.ts';
 
 function Arrows({ sendCommand}: { sendCommand: (direction: string) => void}) {
     const send = (direction: string) => {
@@ -53,6 +54,8 @@ export default function Controller() {
     const [validated, setValidated] = useState(false);
     const gameID = searchParams.get('gameID');
     const { sendCommand, sendMessage } = useGameNetwork(gameID ? gameID : '');
+    const [orientation, setOrientation] = useState<{alpha: number | null, beta: number | null, gamma: number | null}>({alpha: null, beta: null, gamma: null});
+    const { reading, start, stop, supported } = useGyroscope();
 
     const toggleFullSceen = (): void => {
         if (!document.fullscreenElement) {
@@ -63,6 +66,12 @@ export default function Controller() {
             }
         }
     };
+
+    useEffect(() => {
+        if (reading.alpha && reading.beta && reading.gamma) {
+            setOrientation({alpha: reading.alpha, beta: reading.beta, gamma: reading.gamma});
+        }
+    }, [reading]);
 
 
     return (
@@ -99,6 +108,14 @@ export default function Controller() {
                         <div className='flex flex-row justify-between'>
                             <button onClick={() => navi('/')} className="absolute top-5 left-5 z-10 btn btn-primary bg-amber-300 rounded-2xl p-1 hover:shadow-xl">go to website</button>
                             <button onClick={() => setMode(mode == 'arrows' ? 'joystick' : 'arrows')} className="absolute top-5 right-5 z-10 btn btn-primary bg-amber-300 rounded-2xl p-1 hover:shadow-xl">{mode == 'arrows' ? 'Use joystick' : 'Use arrows'}</button>
+                        </div>
+                        <div>
+                            <p>{`Orientation: alpha=${orientation.alpha}, beta=${orientation.beta}, gamma=${orientation.gamma}`}</p>
+                            { !supported && <p>Your browser doesn't support gyroscope data</p> }
+                                <button onClick={async () => {
+                                const ok = await start();
+                                if (!ok) alert('Permission denied or sensor not available');
+                                }}>Enable Gyroscope</button>
                         </div>
                         {mode == 'arrows' && <Arrows sendCommand={sendCommand}/>}
                         {mode == 'joystick' && <MyJoystick toggleFullSceen={toggleFullSceen} sendCommand={sendCommand}/>}

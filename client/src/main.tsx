@@ -6,7 +6,7 @@ import Controller from "./routes/Controller";
 import About from "./routes/About"
 import './index.css'
 import Header from "./components/Header";
-import GameTest from "./routes/gameTest/gameTest";
+import Pong from "./routes/games/Pong";
 
 const root = document.getElementById("root");
 
@@ -21,7 +21,7 @@ function AppWithConditionalHeader() {
         <Route path="/play" element={<Play />} />
         <Route path="/controller" element={<Controller />} />
         <Route path="/about" element={<About />} />
-        <Route path="/gametest" element={<GameTest />} />
+        <Route path="/pong" element={<Pong />} />
       </Routes>
     </>
   );

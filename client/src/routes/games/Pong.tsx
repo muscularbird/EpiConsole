@@ -1,6 +1,9 @@
 import { Application, extend, useTick } from '@pixi/react';
 import { useState, useRef, useCallback } from 'react';
 import { useGameNetwork } from '../../utils/network';
+import {QRCodeSVG} from 'qrcode.react';
+import UI from '../../components/GameUI';
+import { MyChat } from '../../components/MyChat';
 import {
     Container,
     Graphics,
@@ -50,11 +53,11 @@ export default function GameTest() {
     gameStateRef.current = gameState;
 
     function GameLoop() {
-        useTick((delta) => {
+        useTick(() => {
             // if (gameStateRef.current.gameOver || !gameStateRef.current.gameStarted) return;
 
             handleEvents();
-            updateGame(delta);
+            updateGame();
         });
 
         return null;
@@ -306,13 +309,30 @@ export default function GameTest() {
     );
 
     return (
+      <div className='w-full h-full flex flex-row'>
         <div style={{ position: 'relative' }}>
             <UIOverlay />
             <Application width={WIDTH} height={HEIGHT} background={0x1e1e1e}>
                 <GameLoop />
                 <PlayersGraphics />
                 <BallsGraphics />
+                <UI width={WIDTH} height={HEIGHT} showUI={!gameState.gameStarted} onStartClick={() => {
+                    setGameState(prev => ({ ...prev, gameStarted: true }));
+                }} />
             </Application>
         </div>
+        <div className="flex flex-col justify-center mt-20 ml-32">
+          <MyChat gameID={localStorage.getItem('gameID') || ''}/>
+          <h3>Scan the QR code below to start playing</h3>
+          <QRCodeSVG
+            value={`http://${import.meta.env.VITE_IP}:${import.meta.env.VITE_PORT}/controller?gameID=${localStorage.getItem('gameID')}`}
+            className="m-5 w-60 h-60"
+            bgColor={'transparent'}
+            fgColor={'#000000'}
+          />
+          <p className="text-sm">Or go to http://{import.meta.env.VITE_IP}:{import.meta.env.VITE_PORT}/controller</p>
+          <p className="text-sm">And enter the game ID: <span className="font-bold text-lg">{localStorage.getItem('gameID')}</span></p>
+        </div>
+      </div>
     );
 }
