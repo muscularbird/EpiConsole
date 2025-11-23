@@ -63,12 +63,12 @@ export default function Play() {
         <div className="flex flex-col justify-center mt-20 ml-32">
           <h3>Scan the QR code below to start playing</h3>
           <QRCodeSVG
-            value={`http://${import.meta.env.VITE_IP}:${import.meta.env.VITE_PORT}/controller?gameID=${gameID}`}
+            value={`${window.location.origin}/controller?gameID=${gameID}`}
             className="m-5 w-60 h-60"
             bgColor={isDark ? '#1a1a1a' : 'transparent'}
             fgColor={isDark ? '#ffffff' : '#000000'}
           />
-          <p className="text-sm">Or go to http://{import.meta.env.VITE_IP}:{import.meta.env.VITE_PORT}/controller</p>
+          <p className="text-sm">Or go to {window.location.origin}/controller</p>
           <p className="text-sm">And enter the game ID: <span className="font-bold text-lg">{gameID}</span></p>
         </div>
         {/* game selection Section */}

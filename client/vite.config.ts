@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => {
     ],
     server: {
     host: "0.0.0.0",
-    port: process.env.PORT ? parseInt(process.env.PORT) : 5173,
+    port: process.env.HOST_PORT ? parseInt(process.env.HOST_PORT) : 5173,
     watch: {
       usePolling: true,
       interval: 100,
