@@ -55,7 +55,7 @@ export default function Controller() {
     const gameID = searchParams.get('gameID');
     const { sendCommand, sendMessage } = useGameNetwork(gameID ? gameID : '');
     const [orientation, setOrientation] = useState<{alpha: number | null, beta: number | null, gamma: number | null}>({alpha: null, beta: null, gamma: null});
-    const { reading, start, stop, supported } = useGyroscope();
+    const { reading, start, supported } = useGyroscope();
 
     const toggleFullSceen = (): void => {
         if (!document.fullscreenElement) {
