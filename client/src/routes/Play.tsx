@@ -28,7 +28,7 @@ export default function Play() {
     
     checkTheme();
 
-    axios.get(`http://localhost:5000/gameID`).then(response => {
+    axios.get(`http://${import.meta.env.BACKEND_URL}/gameID`).then(response => {
       setGameID(response.data.gameID);
       localStorage.setItem('gameID', response.data.gameID);
     }).catch(error => {
