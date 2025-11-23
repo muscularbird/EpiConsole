@@ -325,12 +325,12 @@ export default function GameTest() {
           <MyChat gameID={localStorage.getItem('gameID') || ''}/>
           <h3>Scan the QR code below to start playing</h3>
           <QRCodeSVG
-            value={`http://${import.meta.env.VITE_IP}:${import.meta.env.VITE_PORT}/controller?gameID=${localStorage.getItem('gameID')}`}
+            value={`${window.location.origin}/controller?gameID=${localStorage.getItem('gameID')}`}
             className="m-5 w-60 h-60"
             bgColor={'transparent'}
             fgColor={'#000000'}
           />
-          <p className="text-sm">Or go to http://{import.meta.env.VITE_IP}:{import.meta.env.VITE_PORT}/controller</p>
+          <p className="text-sm">Or go to {window.location.origin}/controller</p>
           <p className="text-sm">And enter the game ID: <span className="font-bold text-lg">{localStorage.getItem('gameID')}</span></p>
         </div>
       </div>
