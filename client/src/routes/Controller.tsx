@@ -1,10 +1,23 @@
-import Joystick, { Direction } from 'rc-joystick';
+import { Joystick } from 'react-joystick-component';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { useNavigate } from 'react-router';
 import { Button } from '../components/ui/button';
 import { useGameNetwork } from '../utils/network';
 import { useGyroscope } from '../utils/useGyroscope.ts';
+
+
+type JoystickDirection = "FORWARD" | "RIGHT" | "LEFT" | "BACKWARD";
+
+export interface IJoystickUpdateEvent {
+    type: "move" | "stop" | "start";
+    x: number | null;
+    y: number | null;
+    direction: JoystickDirection | null;
+    distance: number | null; // Percentile 0-100% of joystick 
+}
+
+
 
 function Arrows({ sendCommand}: { sendCommand: (direction: string) => void}) {
     const send = (direction: string) => {
@@ -30,14 +43,17 @@ function Arrows({ sendCommand}: { sendCommand: (direction: string) => void}) {
 }
 
 function MyJoystick({toggleFullSceen, sendCommand}: {toggleFullSceen: Function, sendCommand: (direction: string) => void}) {
-    const send = (direction: Direction | String) => {
-        if (direction == "Center") return;
-        sendCommand(direction.toString());
+    const send = (direction: string | null, x: number | null, y: number | null) => {
+        if (!direction) return;
+        if (direction == "FORWARD") sendCommand("Top;" + x + ";" + y);
+        else if (direction == "BACKWARD") sendCommand("Bottom;" + x + ";" + y);
+        else if (direction == "LEFT") sendCommand("Left;" + x + ";" + y);
+        else if (direction == "RIGHT") sendCommand("Right;" + x + ";" + y);
     }
     return (
         <div className='m-auto items-center justify-between flex flex-col h-screen py-30'>
             <div></div> {/* Spacer */}
-            <Joystick onDirectionChange={(direction: Direction | "Center" | "Right" | "RightTop" | "Top" | "TopLeft" | "Left" | "LeftBottom" | "Bottom" | "BottomRight") => send(direction) }/>
+            <Joystick move={(event: IJoystickUpdateEvent) => send(event.direction, event.x, event.y)} size={200}/>
             <button onClick={() => toggleFullSceen()} className='btn btn-primary rounded-2xl p-1'>
                 Toggle full screen mode
             </button>
@@ -94,7 +110,8 @@ export default function Controller() {
                         <h2 className="text-3xl m-auto">Select a Display Name</h2>
                         <form onSubmit={() => {
                             setValidated(true);
-                            sendCommand("new player");
+                            // send join with display name so host can register the player name
+                            sendCommand(`newPlayer:${displayName}`);
                             sendMessage(`${displayName} has joined the game!`);
                             }}>
                         <div className='justify-between'>

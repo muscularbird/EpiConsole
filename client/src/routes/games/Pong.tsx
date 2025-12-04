@@ -1,5 +1,5 @@
 import { Application, extend, useTick } from '@pixi/react';
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useGameNetwork } from '../../utils/network';
 import {QRCodeSVG} from 'qrcode.react';
 import UI from '../../components/GameUI';
@@ -24,6 +24,7 @@ interface Player {
     height: number;
     color: string;
     score: number;
+    name?: string;
 }
 
 interface GameState {
@@ -51,6 +52,21 @@ export default function GameTest() {
     const commandQueueRef = useRef<Array<{ socketID: string, command: string }>>([]);
     
     gameStateRef.current = gameState;
+
+    // spawn an extra ball every 10 seconds while the game is running
+    useEffect(() => {
+        if (!gameState.gameStarted) return;
+
+        const interval = setInterval(() => {
+            setGameState(prev => {
+                if (!prev.gameStarted || prev.gameOver) return prev;
+                const newBall = { x: WIDTH / 2, y: HEIGHT / 2, width: 10, height: 10, resetting: false, dx: (Math.random() > 0.5 ? 1 : -1) * ballSpeed, dy: -ballSpeed };
+                return { ...prev, balls: [...prev.balls, newBall] };
+            });
+        }, 10000);
+
+        return () => clearInterval(interval);
+    }, [gameState.gameStarted]);
 
     function GameLoop() {
         useTick(() => {
@@ -115,22 +131,80 @@ export default function GameTest() {
                 if (!newState.gameStarted) {
                     newState.gameStarted = true;
                 }
-                return newState;
+                // fall through to process the initial command (e.g., newPlayer:<name> or initial position)
             }
             
             if (newState.players[socketID]) {
                 const player = { ...newState.players[socketID] };
+                console.log("Processing command:", command);
+
+                // handle join with name: "newPlayer:DisplayName"
+                if (typeof command === 'string' && command.startsWith('newPlayer:')) {
+                    const name = command.split(':').slice(1).join(':') || undefined;
+                    player.name = name;
+                    newState.players[socketID] = player;
+                    return newState;
+                }
+
+                // handle joystick/position packets: "<dir>;<x>;<y>"
+                if (typeof command === 'string' && command.includes(';')) {
+                    const parts = command.split(';').map(p => p.trim());
+                    const rawX = parts[1];
+                    const rawY = parts[2];
+
+                    const parseNormalized = (v: string | undefined | null) => {
+                        if (v === undefined || v === null || v === '') return null;
+                        const n = parseFloat(v as string);
+                        if (isNaN(n)) return null;
+                        if (Math.abs(n) <= 1) return (n + 1) / 2; // -1..1 -> 0..1
+                        if (n > 0 && n <= 1) return n; // already normalized
+                        if (n > 1 && n <= 100) return n / 100; // percent
+                        return n; // pixel coordinate
+                    };
+
+                    const nx = parseNormalized(rawX);
+                    const ny = parseNormalized(rawY);
+
+                    // vertical paddles (height > width) update y; horizontal update x
+                    if (player.height > player.width) {
+                        if (ny !== null) {
+                            if (ny <= 1) {
+                                player.y = Math.round(ny * (HEIGHT - player.height));
+                            } else {
+                                player.y = Math.max(0, Math.min(HEIGHT - player.height, ny));
+                            }
+                        }
+                    } else {
+                        if (nx !== null) {
+                            if (nx <= 1) {
+                                player.x = Math.round(nx * (WIDTH - player.width));
+                            } else {
+                                player.x = Math.max(0, Math.min(WIDTH - player.width, nx));
+                            }
+                        }
+                    }
+
+                    newState.players[socketID] = player;
+                    return newState;
+                }
+
+                // fallback to simple commands
                 const moveSpeed = 3;
-                
-                switch (command) {
+                switch (command.split(';')[0]) {
                     case 'Top':
                         player.y = Math.max(0, player.y - moveSpeed);
                         break;
                     case 'Bottom':
                         player.y = Math.min(560, player.y + moveSpeed);
                         break;
+                    case 'Left':
+                        player.x = Math.max(0, player.x - moveSpeed);
+                        break;
+                    case 'Right':
+                        player.x = Math.min(WIDTH - player.width, player.x + moveSpeed);
+                        break;
                 }
-                
+
                 newState.players[socketID] = player;
             }
             
@@ -291,7 +365,7 @@ export default function GameTest() {
                             color: player.color,
                             marginLeft: '10px'
                         }}>
-                            {index + 1}. Player {player.id.slice(-4)}: {player.score}
+                            {index + 1}. {player.name ? player.name : `Player ${player.id.slice(-4)}`}: {player.score}
                         </div>
                     ))}
             </div>
@@ -321,7 +395,7 @@ export default function GameTest() {
                 }} />
             </Application>
         </div>
-        <div className="flex flex-col justify-center mt-20 ml-32">
+        <div className="flex flex-col justify-center mt-20 ml-24 items-center">
           <MyChat gameID={localStorage.getItem('gameID') || ''}/>
           <h3>Scan the QR code below to start playing</h3>
           <QRCodeSVG
@@ -330,8 +404,16 @@ export default function GameTest() {
             bgColor={'transparent'}
             fgColor={'#000000'}
           />
-          <p className="text-sm">Or go to {window.location.origin}/controller</p>
-          <p className="text-sm">And enter the game ID: <span className="font-bold text-lg">{localStorage.getItem('gameID')}</span></p>
+          <p>Or go to</p>
+          <a
+            href={`${window.location.origin}/controller?gameID=${encodeURIComponent(localStorage.getItem('gameID') || '')}`}
+            title="Open controller page"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#124859ff', textDecoration: 'underline' }}
+          >
+            {`${window.location.origin}/controller?gameID=${localStorage.getItem('gameID') || ''}`}
+          </a>
         </div>
       </div>
     );

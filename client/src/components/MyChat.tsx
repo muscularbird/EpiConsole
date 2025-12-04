@@ -6,7 +6,7 @@ export function MyChat({gameID}: {gameID: string}) {
   console.log("gameID", gameID);
 
   return (
-    <div className="max-h-60 w-3/12 border rounded-lg p-4">
+    <div className="max-h-60 w-72 md:w-80 lg:w-84 border rounded-lg p-4">
       <h3 className="font-bold mb-2">Chat</h3>
       {messages.length === 0 ? (
         <p className="text-gray-500">No messages yet...</p>

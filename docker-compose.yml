@@ -33,6 +33,7 @@ services:
       - VITE_IP=${HOST_IP}
       - VITE_PORT=${HOST_PORT}
       - BACKEND_URL=${BACKEND_URL}
+      - VITE_BACKEND_URL=${HOST_IP}:5000
 networks:
   back-tier:
 
