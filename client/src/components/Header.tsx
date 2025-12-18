@@ -13,7 +13,7 @@ export default function Header() {
     const navigate = useNavigate();
 
     const switchTheme = (checked: boolean) => {
-        if (checked) {
+        if (!checked) {
             document.documentElement.classList.add('dark');
         } else {
             document.documentElement.classList.remove('dark');
